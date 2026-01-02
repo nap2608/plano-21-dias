@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plano 21 Dias</title>
+
+  <style>
+    :root{
+      --bg:#f3f4f6;
+      --card:#ffffff;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --brand:#4f3cc9;
+      --brand2:#6b4eff;
+      --shadow:0 8px 24px rgba(0,0,0,.06);
+      --radius:14px;
+    }
+
+    *{box-sizing:border-box;}
+
+    body{
+      margin:0;
+      padding:16px;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, Helvetica, sans-serif;
+      background:linear-gradient(180deg,#f8fafc 0%,var(--bg) 100%);
+      color:var(--text);
+    }
+
+    .wrap{
+      max-width:820px;
+      margin:0 auto;
+    }
+
+    /* ===== TOPO ===== */
+    .top{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      margin:6px 0 6px 0;
+    }
+
+    /* LOGO TRANSPARENTE – SEM CAIXA */
+    .logo img{
+      height:46px;
+      width:auto;
+      display:block;
+    }
+
+    h1{
+      margin:0;
+      font-size:22px;
+      font-weight:700;
+    }
+
+    .sub{
+      margin:0 0 18px 0;
+      padding-left:60px;
+      font-size:14px;
+      color:var(--muted);
+    }
+
+    /* ===== CARDS ===== */
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow:var(--shadow);
+      margin-bottom:14px;
+    }
+
+    label{
+      display:block;
+      font-size:13px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+
+    input{
+      width:100%;
+      padding:12px;
+      font-size:15px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      outline:none;
+    }
+
+    input:focus{
+      border-color:rgba(79,60,201,.55);
+      box-shadow:0 0 0 4px rgba(79,60,201,.12);
+    }
+
+    /* ===== DIAS ===== */
+    .days{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+    }
+
+    .day{
+      padding:14px 0;
+      text-align:center;
+      font-weight:700;
+      font-size:16px;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:#e5e7eb;
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .day.done{
+      background:linear-gradient(180deg,var(--brand2),var(--brand));
+      color:#fff;
+      border-color:rgba(79,60,201,.35);
+    }
+
+    /* ===== RESUMO ===== */
+    .summary{
+      text-align:center;
+    }
+
+    .summary .k{
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .summary .v{
+      font-size:22px;
+      font-weight:800;
+    }
+
+    .summary .p{
+      font-size:20px;
+      font-weight:800;
+      color:var(--brand);
+    }
+
+    /* ===== BOTÃO ===== */
+    button{
+      width:100%;
+      padding:16px;
+      border:none;
+      border-radius:16px;
+      font-size:16px;
+      font-weight:800;
+      background:#111827;
+      color:#fff;
+      cursor:pointer;
+    }
+
+    footer{
+      margin-top:10px;
+      text-align:center;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    @media(min-width:768px){
+      .days{grid-template-columns:repeat(7,1fr);}
+    }
+  </style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="logo">
+      <img src="logo_ester_01.png" alt="Ester Pereira">
+    </div>
+    <h1>Plano 21 Dias</h1>
+  </div>
+
+  <p class="sub">Toque diariamente. Simples. Visível. Mensurável.</p>
+
+  <div class="card">
+    <label>Nome</label>
+    <input id="nome" placeholder="Digite seu nome">
+
+    <div style="height:10px"></div>
+
+    <label>Seu WhatsApp (com DDI)</label>
+    <input id="telefone" placeholder="+55 11 9xxxx-xxxx">
+  </div>
+
+  <div class="card">
+    <div class="days" id="days"></div>
+  </div>
+
+  <div class="card summary">
+    <div class="k">Dias cumpridos</div>
+    <div class="v"><span id="doneCount">0</span> / 21</div>
+    <div class="k">Compromisso</div>
+    <div class="p"><span id="percent">0.0</span>%</div>
+  </div>
+
+  <button onclick="enviar()">Enviar resultado</button>
+
+  <footer>Constância diária vence intensidade ocasional.</footer>
+
+</div>
+
+<script>
+const TOTAL = 21;
+let state = JSON.parse(localStorage.getItem("plano21")) || {
+  dias:Array(TOTAL).fill(false),
+  nome:"",
+  tel:""
+};
+
+const days = document.getElementById("days");
+
+function render(){
+  days.innerHTML="";
+  state.dias.forEach((v,i)=>{
+    const d=document.createElement("div");
+    d.className="day"+(v?" done":"");
+    d.innerText=i+1;
+    d.onclick=()=>{
+      state.dias[i]=!state.dias[i];
+      salvar();
+      render();
+    };
+    days.appendChild(d);
+  });
+  const f=state.dias.filter(x=>x).length;
+  doneCount.innerText=f;
+  percent.innerText=((f/TOTAL)*100).toFixed(1);
+}
+
+function salvar(){
+  state.nome=nome.value;
+  state.tel=telefone.value;
+  localStorage.setItem("plano21",JSON.stringify(state));
+}
+
+function enviar(){
+  salvar();
+  const f=state.dias.filter(x=>x).length;
+  const p=((f/TOTAL)*100).toFixed(1);
+  const msg=
+`Plano 21 dias - Ester Pereira
+Nome: ${state.nome||"-"}
+WhatsApp: ${state.tel||"-"}
+Dias: ${f}/21
+Compromisso: ${p}%`;
+  window.location.href="https://wa.me/351930668119?text="+encodeURIComponent(msg);
+}
+
+render();
+</script>
+</body>
+</html>
